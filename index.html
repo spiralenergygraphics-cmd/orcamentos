@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spiral Graphics — Orçamentos</title>
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="Gestão de Orçamentos — Spiral Graphics" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #e8ff00;
+      --accent2: #ff6b35;
+      --text: #f0f0f0;
+      --text-muted: #666;
+      --text-dim: #999;
+      --danger: #ff3b3b;
+      --success: #00e676;
+      --radius: 2px;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── LOGIN ─── */
+    #login-screen {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      z-index: 1000;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .login-logo {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 10vw, 6rem);
+      letter-spacing: 0.05em;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .login-logo span { color: var(--accent); }
+
+    .login-sub {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .login-box {
+      display: flex; flex-direction: column; gap: 1rem;
+      width: min(320px, 90vw);
+    }
+
+    .login-box input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      padding: 1rem 1.2rem;
+      outline: none;
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+      text-align: center;
+      letter-spacing: 0.3em;
+    }
+
+    .login-box input:focus { border-color: var(--accent); }
+
+    .login-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      letter-spacing: 0.1em;
+      padding: 0.9rem;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .login-btn:hover { opacity: 0.9; }
+    .login-btn:active { transform: scale(0.98); }
+
+    .login-error {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--danger);
+      text-align: center;
+      letter-spacing: 0.1em;
+      min-height: 1rem;
+    }
+
+    /* ─── APP ─── */
+    #app { display: none; min-height: 100vh; }
+
+    /* ─── HEADER ─── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      letter-spacing: 0.08em;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+
+    .btn-primary:hover { background: #d4e800; color: #000; border-color: #d4e800; }
+
+    .btn-danger { border-color: var(--danger); color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.7rem; }
+
+    /* ─── MAIN LAYOUT ─── */
+    main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    /* ─── VIEWS ─── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ─── LIST VIEW ─── */
+    .list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── STATS ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.2rem 1.5rem;
+      border-radius: var(--radius);
+    }
+
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.success { color: var(--success); }
+    .stat-value.orange { color: var(--accent2); }
+
+    /* ─── FILTER BAR ─── */
+    .filter-bar {
+      display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 20px;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ─── BUDGET TABLE ─── */
+    .budgets-table { width: 100%; border-collapse: collapse; }
+
+    .budgets-table th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .budgets-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+      vertical-align: middle;
+    }
+
+    .budgets-table tr:hover td { background: var(--surface); }
+    .budgets-table tr { cursor: pointer; transition: background 0.1s; }
+
+    .budget-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .budget-client { font-weight: 500; }
+
+    .status-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status-enviado { background: #1a2a3a; color: #5bc8ff; border: 1px solid #2a4a6a; }
+    .status-aceite { background: #1a2a1a; color: #66ff88; border: 1px solid #2a4a2a; }
+    .status-concluido { background: #2a2a1a; color: var(--accent); border: 1px solid #3a3a2a; }
+    .status-recebido { background: #2a1a2a; color: #cc88ff; border: 1px solid #3a2a3a; }
+    .status-rascunho { background: #1a1a1a; color: var(--text-muted); border: 1px solid var(--border); }
+
+    .amount { font-family: var(--font-mono); font-size: 0.875rem; }
+    .amount.profit { color: var(--success); }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── FORM VIEW ─── */
+    .form-header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-header h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .field {
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+
+    .field label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .field input, .field select, .field textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .field select option { background: var(--surface2); }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    /* ─── ITEMS TABLE ─── */
+    .items-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .items-section-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .items-section-title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .items-table-wrap { overflow-x: auto; }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    .items-table th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      background: var(--surface2);
+    }
+
+    .items-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+
+    .items-table tr:last-child td { border-bottom: none; }
+
+    .items-table input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      padding: 0.4rem 0.5rem;
+      width: 100%;
+      outline: none;
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+    }
+
+    .items-table input:focus { border-color: var(--accent); background: var(--surface2); }
+
+    .items-table .col-desc { min-width: 200px; }
+    .items-table .col-qty { width: 80px; }
+    .items-table .col-cost { width: 120px; }
+    .items-table .col-price { width: 120px; }
+    .items-table .col-margin { width: 100px; }
+    .items-table .col-del { width: 50px; }
+
+    .margin-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 0.4rem 0.5rem;
+      display: block;
+    }
+
+    .margin-pos { color: var(--success); }
+    .margin-neg { color: var(--danger); }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.4rem;
+      line-height: 1;
+      transition: color 0.15s;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .del-btn:hover { color: var(--danger); }
+
+    /* ─── TOTALS ─── */
+    .totals-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .total-item { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .total-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .total-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.03em;
+    }
+
+    .total-value.cost { color: var(--accent2); }
+    .total-value.revenue { color: var(--accent); }
+    .total-value.profit { color: var(--success); }
+
+    /* ─── FORM ACTIONS ─── */
+    .form-actions {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;
+    }
+
+    /* ─── PDF PREVIEW / PRINT ─── */
+    @media print {
+      body * { visibility: hidden; }
+      #pdf-area, #pdf-area * { visibility: visible; }
+      #pdf-area {
+        position: absolute; left: 0; top: 0;
+        width: 100%; background: #fff;
+      }
+    }
+
+    #pdf-area {
+      display: none;
+      background: #fff;
+      color: #000;
+      padding: 40px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .pdf-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 3px solid #0a0a0a;
+    }
+
+    .pdf-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      letter-spacing: 0.1em;
+      color: #0a0a0a;
+      line-height: 1;
+    }
+
+    .pdf-logo span { color: #e8ff00; -webkit-text-stroke: 1px #0a0a0a; }
+
+    .pdf-meta { text-align: right; font-size: 0.8rem; color: #555; }
+    .pdf-meta strong { color: #000; }
+
+    .pdf-client { margin-bottom: 1.5rem; }
+    .pdf-client h3 { font-size: 0.7rem; letter-spacing: 0.2em; color: #999; text-transform: uppercase; margin-bottom: 0.3rem; }
+    .pdf-client p { font-size: 1rem; font-weight: 500; }
+    .pdf-client .desc { font-size: 0.85rem; color: #555; margin-top: 0.2rem; }
+
+    .pdf-status {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border: 1px solid #000;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 1.5rem;
+    }
+
+    .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    .pdf-table th {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #999;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-family: 'DM Mono', monospace;
+    }
+    .pdf-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #eee;
+      font-size: 0.85rem;
+    }
+    .pdf-table .right { text-align: right; font-family: 'DM Mono', monospace; }
+    .pdf-table tr:last-child td { border-bottom: none; }
+
+    .pdf-totals {
+      display: flex; justify-content: flex-end;
+    }
+
+    .pdf-totals-box {
+      border: 1px solid #000;
+      padding: 1rem 1.5rem;
+      min-width: 280px;
+    }
+
+    .pdf-total-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .pdf-total-row:last-child {
+      border-bottom: none;
+      font-weight: 700;
+      font-size: 1rem;
+      padding-top: 0.6rem;
+      margin-top: 0.3rem;
+    }
+
+    .pdf-total-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .pdf-total-row:last-child .pdf-total-label { color: #000; }
+
+    .pdf-footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.7rem;
+      color: #999;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ─── NOTIFICATION ─── */
+    .notif {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+    }
+
+    .notif.show { transform: translateY(0); opacity: 1; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      main { padding: 1rem; }
+      header { padding: 1rem; }
+      .logo { font-size: 1.4rem; }
+      .budgets-table { display: none; }
+      .mobile-cards { display: flex; flex-direction: column; gap: 1rem; }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-cards { display: none; }
+    }
+
+    .mobile-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .mobile-card:hover { border-color: var(--accent); }
+
+    .mobile-card-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .mobile-card-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .mobile-card-client { font-weight: 500; margin-bottom: 0.25rem; font-size: 0.95rem; }
+
+    .mobile-card-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .mobile-card-amount {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ─── ANIM ─── */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .view.active { animation: fadeIn 0.25s ease; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="text-align:center">
+    <div class="login-logo">Spiral<span>.</span></div>
+    <div class="login-sub" style="margin-top:0.3rem">Gestão de Orçamentos</div>
+  </div>
+  <div class="login-box">
+    <input type="password" id="pin-input" placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter') doLogin()" autocomplete="current-password" />
+    <button class="login-btn" onclick="doLogin()">ENTRAR</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">Spiral<span>.</span></div>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="showNew()">+ Novo Orçamento</button>
+      <button class="btn" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- LIST VIEW -->
+    <div class="view active" id="view-list">
+      <div class="list-header">
+        <div class="section-title">Orçamentos</div>
+      </div>
+
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('todos', this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('rascunho', this)">Rascunho</button>
+        <button class="filter-btn" onclick="setFilter('enviado', this)">Enviado</button>
+        <button class="filter-btn" onclick="setFilter('aceite', this)">Aceite</button>
+        <button class="filter-btn" onclick="setFilter('concluido', this)">Concluído</button>
+        <button class="filter-btn" onclick="setFilter('recebido', this)">Recebido</button>
+      </div>
+
+      <!-- Desktop table -->
+      <table class="budgets-table" id="budgets-table">
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Descrição</th>
+            <th>Estado</th>
+            <th style="text-align:right">Custo</th>
+            <th style="text-align:right">Venda</th>
+            <th style="text-align:right">Lucro</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="budgets-tbody"></tbody>
+      </table>
+
+      <!-- Mobile cards -->
+      <div class="mobile-cards" id="mobile-cards"></div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div class="view" id="view-form">
+      <div class="form-header">
+        <button class="btn btn-sm" onclick="showList()">← Voltar</button>
+        <h2 id="form-title">Novo Orçamento</h2>
+        <span id="form-num" style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);margin-left:auto"></span>
+      </div>
+
+      <!-- Header fields -->
+      <div class="form-grid">
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <input type="text" id="f-client" placeholder="Nome do cliente" />
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label>Descrição do Trabalho</label>
+          <textarea id="f-desc" placeholder="Descrição breve do trabalho..."></textarea>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="f-status">
+            <option value="rascunho">Rascunho</option>
+            <option value="enviado">Orçamento Enviado</option>
+            <option value="aceite">Trabalho Aceite</option>
+            <option value="concluido">Trabalho Concluído</option>
+            <option value="recebido">Pagamento Recebido</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="items-section">
+        <div class="items-section-header">
+          <span class="items-section-title">Itens / Materiais</span>
+          <button class="btn btn-sm" onclick="addItem()">+ Adicionar Item</button>
+        </div>
+        <div class="items-table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-desc">Descrição</th>
+                <th class="col-qty">Qtd.</th>
+                <th class="col-cost">Custo Unit.</th>
+                <th class="col-price">Venda Unit.</th>
+                <th class="col-margin">Margem</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="items-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="totals-box" id="totals-box">
+        <div class="total-item">
+          <span class="total-label">Custo Total</span>
+          <span class="total-value cost" id="t-cost">€ 0,00</span>
+        </div>
+        <div class="total-item">
+          <span class="total-label">Total de Venda</span>
+          <span class="total-value revenue" id="t-revenue">€ 0,00</span>
+        </div>
+        <div class="total-item">
+          <span class="total-label">Lucro</span>
+          <span class="total-value profit" id="t-profit">€ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveBudget()">Guardar</button>
+        <button class="btn" onclick="exportPDF()">Exportar PDF</button>
+        <button class="btn btn-danger" id="btn-delete" onclick="deleteBudget()" style="margin-left:auto;display:none">Eliminar</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- PDF AREA (hidden, for print) -->
+<div id="pdf-area"></div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<script>
+  // ─── CONFIG ─────────────────────────────────────────────────────────
+  const PASSWORD = 'spiral2024'; // Altera aqui a tua password
+  const STORAGE_KEY = 'spiral_budgets';
+
+  // ─── STATE ──────────────────────────────────────────────────────────
+  let budgets = [];
+  let currentBudget = null;
+  let currentFilter = 'todos';
+  let editingId = null;
+
+  // ─── AUTH ────────────────────────────────────────────────────────────
+  function doLogin() {
+    const val = document.getElementById('pin-input').value;
+    if (val === PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      sessionStorage.setItem('sg_auth', '1');
+      loadData();
+      renderList();
+    } else {
+      document.getElementById('login-error').textContent = 'Password incorreta';
+      document.getElementById('pin-input').value = '';
+      setTimeout(() => document.getElementById('login-error').textContent = '', 2000);
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('sg_auth');
+    location.reload();
+  }
+
+  // ─── DATA ────────────────────────────────────────────────────────────
+  function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    budgets = raw ? JSON.parse(raw) : [];
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(budgets));
+  }
+
+  function genId() { return 'b' + Date.now() + Math.random().toString(36).slice(2, 6); }
+
+  function genNum() {
+    const year = new Date().getFullYear();
+    const count = budgets.filter(b => b.num && b.num.startsWith(String(year))).length + 1;
+    return `${year}-${String(count).padStart(3, '0')}`;
+  }
+
+  // ─── VIEWS ───────────────────────────────────────────────────────────
+  function showList() {
+    document.getElementById('view-list').classList.add('active');
+    document.getElementById('view-form').classList.remove('active');
+    renderList();
+  }
+
+  function showNew() {
+    editingId = null;
+    document.getElementById('form-title').textContent = 'Novo Orçamento';
+    document.getElementById('form-num').textContent = '';
+    document.getElementById('btn-delete').style.display = 'none';
+    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('f-client').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-status').value = 'rascunho';
+    renderItems([]);
+    calcTotals();
+    document.getElementById('view-list').classList.remove('active');
+    document.getElementById('view-form').classList.add('active');
+  }
+
+  function showEdit(id) {
+    const b = budgets.find(x => x.id === id);
+    if (!b) return;
+    editingId = id;
+    document.getElementById('form-title').textContent = 'Editar Orçamento';
+    document.getElementById('form-num').textContent = b.num || '';
+    document.getElementById('btn-delete').style.display = 'block';
+    document.getElementById('f-date').value = b.date;
+    document.getElementById('f-client').value = b.client;
+    document.getElementById('f-desc').value = b.desc;
+    document.getElementById('f-status').value = b.status;
+    renderItems(b.items || []);
+    calcTotals();
+    document.getElementById('view-list').classList.remove('active');
+    document.getElementById('view-form').classList.add('active');
+  }
+
+  // ─── FILTER ──────────────────────────────────────────────────────────
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderList();
+  }
+
+  // ─── RENDER LIST ─────────────────────────────────────────────────────
+  function renderList() {
+    const filtered = currentFilter === 'todos'
+      ? budgets
+      : budgets.filter(b => b.status === currentFilter);
+
+    // Stats
+    const totalVenda = budgets.reduce((s, b) => s + totalRevenue(b), 0);
+    const totalLucro = budgets.reduce((s, b) => s + totalProfit(b), 0);
+    const totalCusto = budgets.reduce((s, b) => s + totalCost(b), 0);
+    const pendentes = budgets.filter(b => ['enviado','aceite'].includes(b.status)).length;
+
+    document.getElementById('stats-row').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Total de Orçamentos</div>
+        <div class="stat-value accent">${budgets.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Volume de Venda</div>
+        <div class="stat-value accent">${fmt(totalVenda)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Lucro Total</div>
+        <div class="stat-value success">${fmt(totalLucro)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Custo Total</div>
+        <div class="stat-value orange">${fmt(totalCusto)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Em Aberto</div>
+        <div class="stat-value">${pendentes}</div>
+      </div>
+    `;
+
+    // Desktop table
+    const tbody = document.getElementById('budgets-tbody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">Nenhum orçamento encontrado</div></td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.sort((a,b) => b.date.localeCompare(a.date)).map(b => {
+        const cost = totalCost(b);
+        const rev = totalRevenue(b);
+        const profit = totalProfit(b);
+        return `<tr onclick="showEdit('${b.id}')">
+          <td><span class="budget-num">${b.num || '—'}</span></td>
+          <td><span style="font-family:var(--font-mono);font-size:0.8rem">${formatDate(b.date)}</span></td>
+          <td><span class="budget-client">${esc(b.client)}</span></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim);font-size:0.8rem">${esc(b.desc)}</td>
+          <td><span class="status-badge status-${b.status}">${statusLabel(b.status)}</span></td>
+          <td style="text-align:right"><span class="amount">${fmt(cost)}</span></td>
+          <td style="text-align:right"><span class="amount">${fmt(rev)}</span></td>
+          <td style="text-align:right"><span class="amount profit">${fmt(profit)}</span></td>
+          <td><button class="btn btn-sm" onclick="event.stopPropagation();showEdit('${b.id}')">Editar</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Mobile cards
+    const mc = document.getElementById('mobile-cards');
+    mc.innerHTML = filtered.length === 0
+      ? `<div class="empty-state">Nenhum orçamento encontrado</div>`
+      : filtered.sort((a,b) => b.date.localeCompare(a.date)).map(b => `
+        <div class="mobile-card" onclick="showEdit('${b.id}')">
+          <div class="mobile-card-top">
+            <span class="mobile-card-num">${b.num || '—'} · ${formatDate(b.date)}</span>
+            <span class="status-badge status-${b.status}">${statusLabel(b.status)}</span>
+          </div>
+          <div class="mobile-card-client">${esc(b.client)}</div>
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.2rem">${esc(b.desc)}</div>
+          <div class="mobile-card-bottom">
+            <span class="mobile-card-amount" style="color:var(--accent)">Venda: ${fmt(totalRevenue(b))}</span>
+            <span class="mobile-card-amount profit">Lucro: ${fmt(totalProfit(b))}</span>
+          </div>
+        </div>
+      `).join('');
+  }
+
+  // ─── ITEMS ───────────────────────────────────────────────────────────
+  function renderItems(items) {
+    const tbody = document.getElementById('items-tbody');
+    tbody.innerHTML = '';
+    items.forEach((item, i) => addItemRow(item, i));
+  }
+
+  function addItem() {
+    const tbody = document.getElementById('items-tbody');
+    const i = tbody.rows.length;
+    addItemRow({ desc: '', qty: 1, cost: 0, price: 0 }, i);
+    tbody.lastElementChild.querySelector('input').focus();
+    calcTotals();
+  }
+
+  function addItemRow(item, i) {
+    const tbody = document.getElementById('items-tbody');
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.innerHTML = `
+      <td class="col-desc"><input type="text" value="${esc(item.desc)}" placeholder="Descrição / material" onchange="calcTotals()" /></td>
+      <td class="col-qty"><input type="number" value="${item.qty}" min="0" step="any" onchange="calcTotals()" style="text-align:center" /></td>
+      <td class="col-cost"><input type="number" value="${item.cost}" min="0" step="0.01" onchange="calcTotals()" style="text-align:right" /></td>
+      <td class="col-price"><input type="number" value="${item.price}" min="0" step="0.01" onchange="calcTotals()" style="text-align:right" /></td>
+      <td class="col-margin"><span class="margin-val" id="margin-${i}">—</span></td>
+      <td class="col-del"><button class="del-btn" onclick="removeItem(this)">×</button></td>
+    `;
+    tbody.appendChild(tr);
+    updateMargin(tr);
+  }
+
+  function removeItem(btn) {
+    btn.closest('tr').remove();
+    calcTotals();
+  }
+
+  function updateMargin(tr) {
+    const inputs = tr.querySelectorAll('input');
+    const qty = parseFloat(inputs[1].value) || 0;
+    const cost = parseFloat(inputs[2].value) || 0;
+    const price = parseFloat(inputs[3].value) || 0;
+    const margin = (price - cost) * qty;
+    const span = tr.querySelector('.margin-val');
+    span.textContent = fmt(margin);
+    span.className = 'margin-val ' + (margin >= 0 ? 'margin-pos' : 'margin-neg');
+  }
+
+  function calcTotals() {
+    const rows = document.querySelectorAll('#items-tbody tr');
+    let cost = 0, revenue = 0;
+    rows.forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      const qty = parseFloat(inputs[1].value) || 0;
+      const c = parseFloat(inputs[2].value) || 0;
+      const p = parseFloat(inputs[3].value) || 0;
+      cost += qty * c;
+      revenue += qty * p;
+      updateMargin(tr);
+    });
+    const profit = revenue - cost;
+    document.getElementById('t-cost').textContent = fmt(cost);
+    document.getElementById('t-revenue').textContent = fmt(revenue);
+    document.getElementById('t-profit').textContent = fmt(profit);
+    document.getElementById('t-profit').className = 'total-value ' + (profit >= 0 ? 'profit' : 'total-value');
+  }
+
+  function getItems() {
+    const rows = document.querySelectorAll('#items-tbody tr');
+    return Array.from(rows).map(tr => {
+      const inputs = tr.querySelectorAll('input');
+      return {
+        desc: inputs[0].value,
+        qty: parseFloat(inputs[1].value) || 0,
+        cost: parseFloat(inputs[2].value) || 0,
+        price: parseFloat(inputs[3].value) || 0,
+      };
+    });
+  }
+
+  // ─── SAVE / DELETE ───────────────────────────────────────────────────
+  function saveBudget() {
+    const client = document.getElementById('f-client').value.trim();
+    if (!client) { showNotif('Preenche o nome do cliente'); return; }
+
+    const items = getItems();
+    const obj = {
+      id: editingId || genId(),
+      num: editingId ? budgets.find(b => b.id === editingId)?.num : genNum(),
+      date: document.getElementById('f-date').value,
+      client,
+      desc: document.getElementById('f-desc').value.trim(),
+      status: document.getElementById('f-status').value,
+      items,
+      updatedAt: Date.now(),
+    };
+
+    if (editingId) {
+      const idx = budgets.findIndex(b => b.id === editingId);
+      budgets[idx] = obj;
+    } else {
+      budgets.unshift(obj);
+    }
+
+    saveData();
+    showNotif('Orçamento guardado!');
+    showList();
+  }
+
+  function deleteBudget() {
+    if (!editingId) return;
+    if (!confirm('Eliminar este orçamento?')) return;
+    budgets = budgets.filter(b => b.id !== editingId);
+    saveData();
+    showNotif('Orçamento eliminado');
+    showList();
+  }
+
+  // ─── TOTALS HELPERS ──────────────────────────────────────────────────
+  function totalCost(b) {
+    return (b.items || []).reduce((s, i) => s + (i.qty * i.cost), 0);
+  }
+  function totalRevenue(b) {
+    return (b.items || []).reduce((s, i) => s + (i.qty * i.price), 0);
+  }
+  function totalProfit(b) { return totalRevenue(b) - totalCost(b); }
+
+  // ─── PDF EXPORT ──────────────────────────────────────────────────────
+  function exportPDF() {
+    const items = getItems();
+    const client = document.getElementById('f-client').value;
+    const date = document.getElementById('f-date').value;
+    const desc = document.getElementById('f-desc').value;
+    const status = document.getElementById('f-status').value;
+    const num = editingId ? (budgets.find(b => b.id === editingId)?.num || '—') : '(Rascunho)';
+
+    const cost = items.reduce((s, i) => s + i.qty * i.cost, 0);
+    const revenue = items.reduce((s, i) => s + i.qty * i.price, 0);
+    const profit = revenue - cost;
+
+    const rows = items.map(i => `
+      <tr>
+        <td>${esc(i.desc)}</td>
+        <td class="right">${i.qty}</td>
+        <td class="right">${fmt(i.cost)}</td>
+        <td class="right">${fmt(i.price)}</td>
+        <td class="right">${fmt(i.qty * i.price)}</td>
+      </tr>
+    `).join('');
+
+    const area = document.getElementById('pdf-area');
+    area.innerHTML = `
+      <div class="pdf-header">
+        <div>
+          <div class="pdf-logo">Spiral<span>.</span></div>
+          <div style="font-size:0.7rem;letter-spacing:0.15em;color:#999;font-family:'DM Mono',monospace;margin-top:0.3rem">ORÇAMENTO</div>
+        </div>
+        <div class="pdf-meta">
+          <div><strong>Nº ${num}</strong></div>
+          <div style="margin-top:0.3rem">${formatDate(date)}</div>
+        </div>
+      </div>
+
+      <div class="pdf-client">
+        <h3>Cliente</h3>
+        <p>${esc(client)}</p>
+        ${desc ? `<p class="desc">${esc(desc)}</p>` : ''}
+      </div>
+
+      <div class="pdf-status">${statusLabel(status)}</div>
+
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th class="right">Qtd.</th>
+            <th class="right">Custo Unit.</th>
+            <th class="right">Preço Unit.</th>
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div class="pdf-totals">
+        <div class="pdf-totals-box">
+          <div class="pdf-total-row">
+            <span class="pdf-total-label">Custo Total</span>
+            <span style="font-family:'DM Mono',monospace">${fmt(cost)}</span>
+          </div>
+          <div class="pdf-total-row">
+            <span class="pdf-total-label">Lucro</span>
+            <span style="font-family:'DM Mono',monospace">${fmt(profit)}</span>
+          </div>
+          <div class="pdf-total-row">
+            <span class="pdf-total-label">Total de Venda</span>
+            <span style="font-family:'DM Mono',monospace;font-size:1.1rem">${fmt(revenue)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdf-footer">
+        <span>Spiral Graphics</span>
+        <span>Gerado em ${new Date().toLocaleDateString('pt-PT')}</span>
+      </div>
+    `;
+
+    area.style.display = 'block';
+    window.print();
+    area.style.display = 'none';
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────────────
+  function fmt(n) {
+    return '€\u00a0' + (n || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+
+  function statusLabel(s) {
+    return { rascunho: 'Rascunho', enviado: 'Enviado', aceite: 'Aceite', concluido: 'Concluído', recebido: 'Recebido' }[s] || s;
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showNotif(msg) {
+    const el = document.getElementById('notif');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────────────────
+  if (sessionStorage.getItem('sg_auth') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadData();
+    renderList();
+  }
+</script>
+
+<!-- SERVICE WORKER REGISTRATION -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+
+</body>
+</html>
