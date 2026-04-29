@@ -840,7 +840,29 @@
 <script>
   // ─── CONFIG ─────────────────────────────────────────────────────────
   const PASSWORD = 'spiral2024'; // Altera aqui a tua password
-  const STORAGE_KEY = 'spiral_budgets';
+  const SB_URL = 'https://whsaledvqspcbjrktzvn.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoc2FsZWR2cXNwY2Jqcmt0enZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MzY1NzksImV4cCI6MjA5MzAxMjU3OX0.-oRUgvZcN4yD_dcVllqjVLW8mqZhZiZIVM74icG8uq0';
+  const sb = {
+    async get(table) {
+      const r = await fetch(SB_URL+'/rest/v1/'+table+'?order=updated_at.desc', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer '+SB_KEY }
+      });
+      return r.json();
+    },
+    async upsert(table, row) {
+      await fetch(SB_URL+'/rest/v1/'+table, {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer '+SB_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify(row)
+      });
+    },
+    async del(table, id) {
+      await fetch(SB_URL+'/rest/v1/'+table+'?id=eq.'+id, {
+        method: 'DELETE',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer '+SB_KEY }
+      });
+    }
+  };
 
   // ─── STATE ──────────────────────────────────────────────────────────
   let budgets = [];
@@ -856,7 +878,6 @@
       document.getElementById('app').style.display = 'block';
       sessionStorage.setItem('sg_auth', '1');
       loadData();
-      renderList();
     } else {
       document.getElementById('login-error').textContent = 'Password incorreta';
       document.getElementById('pin-input').value = '';
@@ -870,13 +891,21 @@
   }
 
   // ─── DATA ────────────────────────────────────────────────────────────
-  function loadData() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    budgets = raw ? JSON.parse(raw) : [];
+  async function loadData() {
+    showNotif('A carregar...');
+    const data = await sb.get('orcamentos');
+    budgets = Array.isArray(data) ? data.map(r => ({
+      id: r.id, num: r.num, date: r.date, client: r.client,
+      desc: r.descricao, status: r.status, items: r.items || [], updatedAt: r.updated_at
+    })) : [];
+    renderList();
   }
 
-  function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(budgets));
+  async function saveData(obj) {
+    await sb.upsert('orcamentos', {
+      id: obj.id, num: obj.num, date: obj.date, client: obj.client,
+      descricao: obj.desc, status: obj.status, items: obj.items, updated_at: obj.updatedAt
+    });
   }
 
   function genId() { return 'b' + Date.now() + Math.random().toString(36).slice(2, 6); }
@@ -1092,7 +1121,7 @@
   }
 
   // ─── SAVE / DELETE ───────────────────────────────────────────────────
-  function saveBudget() {
+  async function saveBudget() {
     const client = document.getElementById('f-client').value.trim();
     if (!client) { showNotif('Preenche o nome do cliente'); return; }
 
@@ -1115,16 +1144,16 @@
       budgets.unshift(obj);
     }
 
-    saveData();
+    await saveData(obj);
     showNotif('Orçamento guardado!');
     showList();
   }
 
-  function deleteBudget() {
+  async function deleteBudget() {
     if (!editingId) return;
     if (!confirm('Eliminar este orçamento?')) return;
     budgets = budgets.filter(b => b.id !== editingId);
-    saveData();
+    await sb.del('orcamentos', editingId);
     showNotif('Orçamento eliminado');
     showList();
   }
@@ -1254,7 +1283,6 @@
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadData();
-    renderList();
   }
 </script>
 
